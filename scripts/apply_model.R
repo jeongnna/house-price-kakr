@@ -1,6 +1,5 @@
 library(tidyverse)
-source("src/source_dir.R")
-source_dir("jds")
+library(jnds)
 
 
 # preparation -------------------------------------------------------------
