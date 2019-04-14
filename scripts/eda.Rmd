@@ -1,0 +1,632 @@
+---
+title: "Exploratory Data Analysis"
+output:
+  html_document:
+    toc: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# Preparation
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(corrplot)
+library(RColorBrewer)
+source("../src/source_dir.R")
+source_dir("../jds")
+
+train <- read_csv("../data/train.csv")
+glimpse(train)
+```
+
+# Target variable
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = price)) +
+  geom_histogram()
+
+p2 <- train %>% 
+  ggplot(aes(x = price)) +
+  geom_histogram() +
+  scale_x_log10()
+
+multiplot(p1, p2, cols = 2)
+```
+
+# Covariates
+
+## Categorical variables {.tabset .tabset-fade}
+
+### waterfront
+
+```{r}
+train %>% 
+  ggplot(aes(x = factor(waterfront))) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$waterfront)
+y <- log(train$price)
+config = list(xlab = "waterfront", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+multiplot(p1, p2, cols = 2)
+```
+
+-----
+
+## Ordinal variables {.tabset .tabset-fade}
+
+### view
+
+```{r}
+train %>% 
+  ggplot(aes(x = view)) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$view)
+y <- log(train$price)
+config = list(xlab = "view", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+
+x <- train$view
+x[x == 1] <- 2
+x <- factor(x)
+y <- log(train$price)
+config = list(xlab = "view", ylab = "log(price)")
+p3 <- gg_jitter_box(x, y, config)
+p4 <- gg_ycut_xprop(x, y, config)
+
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### condition
+
+```{r}
+train %>% 
+  ggplot(aes(x = condition)) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$condition)
+y <- log(train$price)
+config = list(xlab = "condition", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+
+x <- factor(ifelse(train$condition >= 3, 1, 0))
+y <- log(train$price)
+config = list(xlab = "condition", ylab = "log(price)")
+p3 <- gg_jitter_box(x, y, config)
+p4 <- gg_ycut_xprop(x, y, config)
+
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### grade
+
+```{r}
+train %>% 
+  ggplot(aes(x = grade)) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$grade)
+y <- log(train$price)
+config = list(xlab = "grade", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+
+x <- train$grade
+x[x <= 4] <- 4
+x <- factor(x)
+y <- log(train$price)
+config = list(xlab = "grade", ylab = "log(price)")
+p3 <- gg_jitter_box(x, y, config)
+p4 <- gg_ycut_xprop(x, y, config)
+
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+## Discrete variables {.tabset .tabset-fade}
+
+### bedrooms
+
+```{r}
+train %>% 
+  ggplot(aes(x = bedrooms)) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$bedrooms)
+y <- log(train$price)
+config = list(xlab = "bedrooms", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+multiplot(p1, p2, cols = 2)
+```
+
+-----
+
+### bathrooms
+
+```{r}
+train %>% 
+  ggplot(aes(x = bathrooms)) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$bathrooms)
+y <- log(train$price)
+config = list(xlab = "bathrooms", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+
+x <- train$bathrooms
+x[x <= 0.75] <- 0.75
+x[x >= 4.5] <- 4.5
+x <- factor(x)
+y <- log(train$price)
+config = list(xlab = "bathrooms", ylab = "log(price)")
+p3 <- gg_jitter_box(x, y, config)
+p4 <- gg_ycut_xprop(x, y, config)
+
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### floors
+
+```{r}
+train %>% 
+  ggplot(aes(x = floors)) +
+  geom_bar()
+```
+
+```{r}
+x <- factor(train$floors)
+y <- log(train$price)
+config = list(xlab = "floors", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+
+x <- train$floors
+x[x >= 3] <- 3
+x <- factor(x)
+y <- log(train$price)
+config = list(xlab = "floors", ylab = "log(price)")
+p3 <- gg_jitter_box(x, y, config)
+p4 <- gg_ycut_xprop(x, y, config)
+
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+## Continuous variables {.tabset .tabset-fade}
+
+### sqft_living
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = sqft_living)) +
+  geom_histogram()
+p2 <- train %>% 
+  ggplot(aes(x = log(sqft_living))) +
+  geom_histogram()
+p3 <- train %>% 
+  ggplot(aes(x = sqft_living, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  ggplot(aes(x = log(sqft_living), y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### sqft_lot
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = sqft_lot)) +
+  geom_histogram()
+p2 <- train %>% 
+  ggplot(aes(x = log(sqft_lot))) +
+  geom_histogram()
+p3 <- train %>% 
+  ggplot(aes(x = sqft_lot, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  ggplot(aes(x = log(sqft_lot), y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### sqft_above
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = sqft_above)) +
+  geom_histogram()
+p2 <- train %>% 
+  ggplot(aes(x = log(sqft_above))) +
+  geom_histogram()
+p3 <- train %>% 
+  ggplot(aes(x = sqft_above, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  ggplot(aes(x = log(sqft_above), y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### sqft_basement
+
+```{r}
+p1 <- train %>% 
+  filter(sqft_basement > 0) %>% 
+  ggplot(aes(x = sqft_basement)) +
+  geom_histogram()
+p2 <- train %>% 
+  filter(sqft_basement > 0) %>% 
+  ggplot(aes(x = log(sqft_basement))) +
+  geom_histogram()
+p3 <- train %>% 
+  filter(sqft_basement > 0) %>% 
+  ggplot(aes(x = sqft_basement, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  filter(sqft_basement > 0) %>% 
+  ggplot(aes(x = log(sqft_basement), y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+```{r}
+x <- factor(ifelse(train$sqft_basement == 0, 1, 0))
+y <- log(train$price)
+config = list(xlab = "no_basement", ylab = "log(price)")
+p1 <- gg_jitter_box(x, y, config)
+p2 <- gg_ycut_xprop(x, y, config)
+multiplot(p1, p2, cols = 2)
+```
+
+-----
+
+### sqft_living15
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = sqft_living15)) +
+  geom_histogram()
+p2 <- train %>% 
+  ggplot(aes(x = log(sqft_living15))) +
+  geom_histogram()
+p3 <- train %>% 
+  ggplot(aes(x = sqft_living15, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  ggplot(aes(x = log(sqft_living15), y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### sqft_lot15
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = sqft_lot15)) +
+  geom_histogram()
+p2 <- train %>% 
+  ggplot(aes(x = log(sqft_lot15))) +
+  geom_histogram()
+p3 <- train %>% 
+  ggplot(aes(x = sqft_lot15, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  ggplot(aes(x = log(sqft_lot15), y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, ncol = 2, byrow = TRUE)
+)
+```
+
+-----
+
+## The others {.tabset .tabset-fade}
+
+### Date & Year
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = yr_built)) +
+  geom_histogram()
+p2 <- train %>% 
+  filter(yr_renovated > 0) %>% 
+  ggplot(aes(x = yr_renovated)) +
+  geom_histogram()
+p3 <- train %>% 
+  filter(yr_renovated > 0) %>% 
+  mutate(delay_renovated = yr_renovated - yr_built) %>% 
+  ggplot(aes(x = delay_renovated)) +
+  geom_histogram()
+p4 <- train %>% 
+  ggplot(aes(x = date)) +
+  geom_histogram()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, nrow = 2, byrow = TRUE)
+)
+```
+
+```{r}
+p1 <- train %>% 
+  ggplot(aes(x = yr_built, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p2 <- train %>% 
+  mutate(yr_renovated = 0.5 * (yr_built + yr_renovated + abs(yr_built - yr_renovated))) %>% 
+  ggplot(aes(x = yr_renovated, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p3 <- train %>% 
+  mutate(yr_renovated = 0.5 * (yr_built + yr_renovated + abs(yr_built - yr_renovated))) %>% 
+  mutate(delay_renovated = yr_renovated - yr_built) %>% 
+  ggplot(aes(x = delay_renovated, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+p4 <- train %>% 
+  ggplot(aes(x = date, y = log(price))) +
+  geom_point(alpha = .5) +
+  geom_smooth()
+multiplot(
+  p1, p2, p3, p4,
+  layout = matrix(1:4, nrow = 2, byrow = TRUE)
+)
+```
+
+-----
+
+### Spatial
+
+```{r}
+train %>% 
+  ggplot(aes(x = long, y = lat, col = log(price))) +
+  geom_point(size = .5) +
+  scale_x_continuous(limits = range(train$long)) +
+  scale_y_continuous(limits = range(train$lat))
+```
+
+```{r}
+train %>% 
+  group_by(zipcode) %>% 
+  summarize(
+    lat = mean(lat),
+    long = mean(long),
+    price = mean(price)
+  ) %>% 
+  ggplot(aes(x = long, y = lat, col = log(price), size = log(price))) +
+  geom_point() +
+  scale_x_continuous(limits = range(train$long)) +
+  scale_y_continuous(limits = range(train$lat)) +
+  guides(size = FALSE)
+```
+
+```{r}
+df <- train %>% 
+  group_by(zipcode) %>% 
+  summarize(
+    lat = mean(lat),
+    long = mean(long),
+    log_price = mean(log(price))
+  )
+s <- 0.5 * (sd(df$lat) + sd(df$long))
+w <- 2
+df$log_price <- scale(df$log_price) * s * w
+hc <- hclust(dist(df[2:4]))
+```
+
+```{r}
+df$cluster <- factor(cutree(hc, h = .4))
+df %>% 
+  ggplot(aes(x = long, y = lat, col = cluster, size = log_price)) +
+  geom_point() +
+  scale_x_continuous(limits = range(train$long)) +
+  scale_y_continuous(limits = range(train$lat)) +
+  guides(size = FALSE)
+```
+
+-----
+
+# Correlation
+
+```{r}
+num_cols <- names(train)[sapply(train, is.numeric)]
+corr_mat <- cor(train[num_cols])
+corrplot(corr_mat, type = "upper", order = "AOE", tl.cex = .7)
+```
+
+-----
+
+# Interactions {.tabset .tabset-fade}
+
+## view * condition
+
+```{r}
+tibble(
+  x = factor(train$view),
+  y = factor(train$condition),
+  p = log(train$price)
+) %>% 
+  group_by(x, y) %>% 
+  summarize(p = mean(p)) %>% 
+  ggplot() +
+  geom_tile(aes(x = x, y = y, fill = p)) +
+  geom_text(aes(x = x, y = y, label = round(p, 1))) +
+  scale_fill_distiller(palette = "RdBu")
+```
+
+-----
+
+## sqft_above * sqft_basement
+
+```{r}
+train %>% 
+  filter(sqft_basement > 0) %>% 
+  mutate(
+    log_sqft_above = cut(log(sqft_above), 15),
+    log_sqft_basement = cut(log(sqft_basement), 15)
+  ) %>% 
+  group_by(log_sqft_above, log_sqft_basement) %>% 
+  summarize(log_price = mean(log(price))) %>% 
+  ggplot(aes(x = log_sqft_above, y = log_sqft_basement, fill = log_price)) +
+  geom_tile() +
+  geom_text(aes(label =  round(log_price, 1)), size = 2.5) +
+  scale_fill_distiller(palette = "RdBu")
+```
+
+-----
+
+## sqft_above * sqft_lot
+
+```{r}
+train %>% 
+  mutate(
+    log_sqft_above = cut(log(sqft_above), 15),
+    log_sqft_lot = cut(log(sqft_lot), 15)
+  ) %>% 
+  group_by(log_sqft_above, log_sqft_lot) %>% 
+  summarize(log_price = mean(log(price))) %>% 
+  ggplot(aes(x = log_sqft_above, y = log_sqft_lot, fill = log_price)) +
+  geom_tile() +
+  geom_text(aes(label =  round(log_price, 1)), size = 2.5) +
+  scale_fill_distiller(palette = "RdBu")
+```
+
+-----
+
+## sqft_above * bedrooms
+
+```{r}
+train %>% 
+  mutate(
+    log_sqft_above = cut(log(sqft_above), 15),
+    factor(bedrooms)
+  ) %>% 
+  group_by(log_sqft_above, bedrooms) %>% 
+  summarize(log_price = mean(log(price))) %>% 
+  ggplot(aes(x = log_sqft_above, y = bedrooms, fill = log_price)) +
+  geom_tile() +
+  geom_text(aes(label =  round(log_price, 1)), size = 2.5) +
+  scale_fill_distiller(palette = "RdBu")
+```
+
+-----
+
+## sqft_above * bathrooms
+
+```{r}
+train %>% 
+  mutate(
+    log_sqft_above = cut(log(sqft_above), 15),
+    bathrooms = cut(bathrooms, 15)
+  ) %>% 
+  group_by(log_sqft_above, bathrooms) %>% 
+  summarize(log_price = mean(log(price))) %>% 
+  ggplot(aes(x = log_sqft_above, y = bathrooms, fill = log_price)) +
+  geom_tile() +
+  geom_text(aes(label =  round(log_price, 1)), size = 2.5) +
+  scale_fill_distiller(palette = "RdBu")
+```
+
+-----
+
+## sqft_above * floors
+
+```{r}
+train %>% 
+  mutate(
+    log_sqft_above = cut(log(sqft_above), 10),
+    floors = factor(floors)
+  ) %>% 
+  group_by(log_sqft_above, floors) %>% 
+  summarize(log_price = mean(log(price))) %>% 
+  ggplot(aes(x = log_sqft_above, y = floors, fill = log_price)) +
+  geom_tile() +
+  geom_text(aes(label = round(log_price, 1))) +
+  scale_fill_distiller(palette = "RdBu")
+```
