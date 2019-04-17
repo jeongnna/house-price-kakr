@@ -127,12 +127,34 @@ pp_date_yr_switch <- pp_switch(
   data = train_raw
 )
 
-pp_relevel_grid <- pp_grid(
+pp_relevel_switch <- pp_switch(
   trans_view,
   trans_condition,
   trans_grade,
   trans_bathrooms,
   trans_floors,
+  pp_sequential(
+    trans_floors,
+    as_factor_floors,
+    data = train_raw
+  ),
+  pp_sequential(
+    trans_view,
+    trans_condition,
+    trans_grade,
+    trans_bathrooms,
+    trans_floors,
+    data = train_raw
+  ),
+  pp_sequential(
+    trans_view,
+    trans_condition,
+    trans_grade,
+    trans_bathrooms,
+    trans_floors,
+    as_factor_floors,
+    data = train_raw
+  ),
   default = pp_baseline,
   data = train_raw
 )
@@ -143,4 +165,4 @@ pp_relevel_grid <- pp_grid(
 dir.create("models/", showWarnings = FALSE)
 save(pp_baseline, file = "models/pp_baseline.RData")
 save(pp_date_yr_switch, file = "models/pp_date_yr_switch.RData")
-save(pp_relevel_grid, file = "models/pp_relevel_grid.RData")
+save(pp_relevel_switch, file = "models/pp_relevel_switch.RData")
