@@ -20,6 +20,18 @@ zipcode_cluster <- function(data, w = 1, k = NULL, h = NULL) {
   zipcode_summ %>% select(zipcode, cluster)
 }
 
+create_pp_zipcode <- function(w = 1, k = NULL, h = NULL, desc = NULL) {
+  pp_instant(
+    expr({
+      repl <- object$sub_object$cluster
+      names(repl) <- object$sub_object$zipcode
+      data$zipcode <- plyr::revalue(factor(data$zipcode), repl)
+    }),
+    sub_object = zipcode_cluster(train_raw, w, k, h),
+    desc = desc
+  )
+}
+
 
 # data loading ------------------------------------------------------------
 
@@ -29,67 +41,120 @@ train_raw <- read_csv("data/train.csv")
 # pp modules --------------------------------------------------------------
 
 # baseline
-cat_cols <- c("waterfront", "zipcode")
-cat_to_factor <- pp_factor(cols = cat_cols)
-remove_id <- pp_remove("id")
-remove_sqft_living <- pp_remove("sqft_living")
-trans_zipcode_baseline <- pp_instant(
-  expr({
-    repl <- object$sub_object$cluster
-    names(repl) <- object$sub_object$zipcode
-    data$zipcode <- plyr::revalue(factor(data$zipcode), repl)
-  }),
-  sub_object = zipcode_cluster(train_raw, w = 1)
+cat_to_factor <- pp_factor(
+  cols = c("waterfront", "zipcode"),
+  desc = "category to factor"
 )
-trans_yr_renovated <- pp_instant(expr({
-  no_rv <- data$yr_renovated == 0
-  data$yr_renovated[no_rv] <- data$yr_built[no_rv]
-}))
+remove_id <- pp_remove(
+  "id",
+  desc = "Remove id"
+)
+remove_sqft_living <- pp_remove(
+  "sqft_living",
+  desc = "remove sqft_living"
+)
+# trans_zipcode_baseline <- pp_instant(
+#   expr({
+#     repl <- object$sub_object$cluster
+#     names(repl) <- object$sub_object$zipcode
+#     data$zipcode <- plyr::revalue(factor(data$zipcode), repl)
+#   }),
+#   sub_object = zipcode_cluster(train_raw, w = 1),
+#   desc = "zipcode 53 clusters"
+# )
+
+trans_zipcode_baseline <- create_pp_zipcode(desc = "zipcode 53 clusters")
+
+trans_yr_renovated <- pp_instant(
+  expr({
+    no_rv <- data$yr_renovated == 0
+    data$yr_renovated[no_rv] <- data$yr_built[no_rv]
+  }),
+  desc = "adjust yr_renovated zero values"
+)
 
 
 # date & year
-trans_yr_renoveted2 <- pp_instant(expr({
-  data <- 
-    data %>%
-    mutate(delay_renovated = yr_renovated - yr_built) %>%
-    select(-yr_renovated)
-}))
-remove_yr <- pp_remove(c("yr_built", "yr_renovated"))
-remove_date <- pp_remove("date")
+new_renovated <- pp_instant(
+  expr({
+    data$renovated <- factor(ifelse(data$yr_renovated == 0, 0, 1))
+  }),
+  desc = "create renovated"
+)
+trans_yr_renovated2 <- pp_instant(
+  expr({
+    data <- 
+      data %>%
+      mutate(delay_renovated = yr_renovated - yr_built) %>%
+      select(-yr_renovated)
+  }),
+  desc = "yr_renovated to delay_renovated"
+)
+remove_yr <- pp_remove(c("yr_built", "yr_renovated"), desc = "remove yr_built, yr_renovated")
+remove_date <- pp_remove("date", desc = "remove date")
 
 
 # releveling
-trans_view <- pp_instant(expr({
-  data$view[data$view == 1] <- 2
-}))
-trans_condition <- pp_instant(expr({
-  data$condition <- factor(ifelse(data$condition >= 3, 1, 0))
-}))
-trans_grade <- pp_instant(expr({
-  data$grade[data$grade <= 4] <- 4
-}))
-trans_bathrooms <- pp_instant(expr({
-  data$bathrooms[data$bathrooms <= 0.75] <- 0.75
-  data$bathrooms[data$bathrooms >= 4.5] <- 4.5
-}))
-trans_floors <- pp_instant(expr({
-  data$floors[data$floors >= 3] <- 3
-}))
-as_factor_floors <- pp_factor(cols = "floors")
+trans_view <- pp_instant(
+  expr({
+    data$view[data$view == 1] <- 2
+  }),
+  desc = "relevel view"
+)
+trans_condition <- pp_instant(
+  expr({
+    data$condition <- factor(ifelse(data$condition >= 3, 1, 0))
+  }),
+  desc = "relevel condition"
+)
+trans_grade <- pp_instant(
+  expr({
+    data$grade[data$grade <= 4] <- 4
+  }),
+  desc = "relevel grade"
+)
+trans_bathrooms <- pp_instant(
+  expr({
+    data$bathrooms[data$bathrooms <= 0.75] <- 0.75
+    data$bathrooms[data$bathrooms >= 4.5] <- 4.5
+  }),
+  desc = "relevel bathrooms"
+)
+trans_floors <- pp_instant(
+  expr({
+    data$floors[data$floors >= 3] <- 3
+  }),
+  desc = "relevel floors"
+)
+as_factor_floors <- pp_factor(cols = "floors", desc = "floors to factor")
 
 
 # continuous variables
-trans_sqft_basement <- pp_instant(expr({
-  zero_mask <- data$sqft_basement == 0
-  data$sqft_basement[zero_mask] <- mean(data$sqft_basement, na.rm = TRUE)
-}))
-new_no_basement <- pp_instant(expr({
-  data$no_basement <- factor(ifelse(data$sqft_basement == 0, 1, 0))
-}))
-remove_sqft_15s <- pp_remove(c("sqft_living15", "sqft_lot15"))
-remove_sqft_lot <- pp_remove("sqft_lot")
-
-
+new_no_basement <- pp_instant(
+  expr({
+    data$no_basement <- factor(ifelse(data$sqft_basement == 0, 1, 0))
+  }),
+  desc = "create no_basement"
+)
+trans_sqft_basement <- pp_instant(
+  expr({
+    zero_mask <- data$sqft_basement == 0
+    data$sqft_basement[zero_mask] <- mean(data$sqft_basement, na.rm = TRUE)
+  }),
+  desc = "handle sqft_basement zero values"
+)
+remove_sqft_living15 <- pp_remove(
+  "sqft_living15",
+  desc = "remove sqft_living15"
+)
+remove_sqft_lot15 <- pp_remove(
+  "sqft_lot15",
+  desc = "remove sqft_lot15"
+)
+remove_sqft_lot <- pp_remove(
+  "sqft_lot",
+  desc = "remove sqft_lot"
+)
 
 
 # spatial
@@ -114,13 +179,30 @@ pp_baseline <- pp_sequential(
   data = train_raw
 )
 
-pp_date_yr_switch <- pp_switch(
+pp_date_yr_grid <- pp_grid(
+  new_renovated,
+  trans_yr_renovated2,
   remove_date,
-  trans_yr_renoveted2,
+  default = pp_baseline,
+  data = train_raw
+)
+
+pp_date_yr_switch <- pp_switch(
   remove_yr,
   pp_sequential(
-    trans_yr_renoveted2,
+    new_renovated,
+    remove_yr,
+    data = train_raw
+  ),
+  pp_sequential(
     remove_date,
+    remove_yr,
+    data = train_raw
+  ),
+  pp_sequential(
+    new_renovated,
+    remove_date,
+    remove_yr,
     data = train_raw
   ),
   default = pp_baseline,
@@ -133,28 +215,16 @@ pp_relevel_switch <- pp_switch(
   trans_grade,
   trans_bathrooms,
   trans_floors,
-  pp_sequential(
-    trans_floors,
-    as_factor_floors,
-    data = train_raw
-  ),
-  pp_sequential(
-    trans_view,
-    trans_condition,
-    trans_grade,
-    trans_bathrooms,
-    trans_floors,
-    data = train_raw
-  ),
-  pp_sequential(
-    trans_view,
-    trans_condition,
-    trans_grade,
-    trans_bathrooms,
-    trans_floors,
-    as_factor_floors,
-    data = train_raw
-  ),
+  default = pp_baseline,
+  data = train_raw
+)
+
+pp_conti_grid <- pp_grid(
+  new_no_basement,
+  trans_sqft_basement,
+  remove_sqft_living15,
+  remove_sqft_lot15,
+  remove_sqft_lot,
   default = pp_baseline,
   data = train_raw
 )
@@ -164,5 +234,7 @@ pp_relevel_switch <- pp_switch(
 
 dir.create("models/", showWarnings = FALSE)
 save(pp_baseline, file = "models/pp_baseline.RData")
+save(pp_date_yr_grid, file = "models/pp_date_yr_grid.RData")
 save(pp_date_yr_switch, file = "models/pp_date_yr_switch.RData")
 save(pp_relevel_switch, file = "models/pp_relevel_switch.RData")
+save(pp_conti_grid, file = "models/pp_conti_grid.RData")

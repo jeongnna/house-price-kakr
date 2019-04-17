@@ -90,5 +90,7 @@ oneclick_eval <- function(pp_file, multi_module) {
 train_raw <- read_csv("data/train.csv")
 
 oneclick_eval("pp_baseline", multi_module = FALSE)
+oneclick_eval("pp_date_yr_grid", multi_module = TRUE)
 oneclick_eval("pp_date_yr_switch", multi_module = TRUE)
 oneclick_eval("pp_relevel_switch", multi_module = TRUE)
+oneclick_eval("pp_conti_grid", multi_module = TRUE)
