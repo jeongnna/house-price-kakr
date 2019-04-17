@@ -40,4 +40,5 @@ rsconnect/
 
 # by-products
 scripts/eda.html
-model/*
+models/*
+outputs/*

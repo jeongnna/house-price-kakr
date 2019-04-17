@@ -12,7 +12,7 @@ zipcode_cluster <- function(data, w = 1, k = NULL, h = NULL) {
       long = mean(long),
       log_price = mean(log(price))
     )
-  if (is.null(k) & is.null(h)) k <- 53
+  if (is.null(k) & is.null(h)) k <- 53  # minimal levels RF model can handle
   s <- 0.5 * (sd(zipcode_summ$lat) + sd(zipcode_summ$long))
   zipcode_summ$log_price <- scale(zipcode_summ$log_price) * s * w
   hc <- hclust(dist(zipcode_summ[2:4]))
@@ -41,8 +41,24 @@ trans_zipcode_baseline <- pp_instant(
   }),
   sub_object = zipcode_cluster(train_raw, w = 1)
 )
+trans_yr_renovated <- pp_instant(expr({
+  no_rv <- data$yr_renovated == 0
+  data$yr_renovated[no_rv] <- data$yr_built[no_rv]
+}))
 
-# ordinal variables
+
+# date & year
+trans_yr_renoveted2 <- pp_instant(expr({
+  data <- 
+    data %>%
+    mutate(delay_renovated = yr_renovated - yr_built) %>%
+    select(-yr_renovated)
+}))
+remove_yr <- pp_remove(c("yr_built", "yr_renovated"))
+remove_date <- pp_remove("date")
+
+
+# releveling
 trans_view <- pp_instant(expr({
   data$view[data$view == 1] <- 2
 }))
@@ -52,8 +68,6 @@ trans_condition <- pp_instant(expr({
 trans_grade <- pp_instant(expr({
   data$grade[data$grade <= 4] <- 4
 }))
-
-# discrete variables
 trans_bathrooms <- pp_instant(expr({
   data$bathrooms[data$bathrooms <= 0.75] <- 0.75
   data$bathrooms[data$bathrooms >= 4.5] <- 4.5
@@ -62,6 +76,7 @@ trans_floors <- pp_instant(expr({
   data$floors[data$floors >= 3] <- 3
 }))
 as_factor_floors <- pp_factor(cols = "floors")
+
 
 # continuous variables
 trans_sqft_basement <- pp_instant(expr({
@@ -74,19 +89,8 @@ new_no_basement <- pp_instant(expr({
 remove_sqft_15s <- pp_remove(c("sqft_living15", "sqft_lot15"))
 remove_sqft_lot <- pp_remove("sqft_lot")
 
-# date & year
-trans_yr_renovated <- pp_instant(expr({
-  no_rv <- data$yr_renovated == 0
-  data$yr_renovated[no_rv] <- data$yr_built[no_rv]
-}))
-trans_yr_renoveted2 <- pp_instant(expr({
-  data <- 
-    data %>%
-    mutate(delay_renovated = yr_renovated - yr_built) %>%
-    select(-yr_renovated)
-}))
-remove_yr <- pp_remove(c("yr_built", "yr_renovated"))
-remove_date <- pp_remove("date")
+
+
 
 # spatial
 trans_zipcode_w1_h.4 <- pp_instant(
@@ -103,13 +107,40 @@ trans_zipcode_w1_h.4 <- pp_instant(
 
 pp_baseline <- pp_sequential(
   cat_to_factor,
-  trans_zipcode_baseline,
   remove_id,
   remove_sqft_living,
+  trans_zipcode_baseline,
+  trans_yr_renovated,
+  data = train_raw
+)
+
+pp_date_yr_switch <- pp_switch(
+  remove_date,
+  trans_yr_renoveted2,
+  remove_yr,
+  pp_sequential(
+    trans_yr_renoveted2,
+    remove_date,
+    data = train_raw
+  ),
+  default = pp_baseline,
+  data = train_raw
+)
+
+pp_relevel_grid <- pp_grid(
+  trans_view,
+  trans_condition,
+  trans_grade,
+  trans_bathrooms,
+  trans_floors,
+  default = pp_baseline,
   data = train_raw
 )
 
 
 # save pp modules ---------------------------------------------------------
 
-save(pp_baseline, file = "model/pp_baseline.RData")
+dir.create("models/", showWarnings = FALSE)
+save(pp_baseline, file = "models/pp_baseline.RData")
+save(pp_date_yr_switch, file = "models/pp_date_yr_switch.RData")
+save(pp_relevel_grid, file = "models/pp_relevel_grid.RData")
