@@ -61,7 +61,7 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
   list(
     lasso = list(
       time = lasso_time,
-      loss = rmse(lasso_pred, data$price
+      loss = rmse(lasso_pred, data$price)
     ),
     rf = list(
       time = rf_time,
