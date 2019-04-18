@@ -77,7 +77,7 @@ trans_yr_renovated <- pp_instant(
 # date & year
 new_renovated <- pp_instant(
   expr({
-    data$renovated <- factor(ifelse(data$yr_renovated == 0, 0, 1))
+    data <- mutate(data, renovated = ifelse(yr_renovated == yr_built, 0, 1))
   }),
   desc = "create renovated"
 )
