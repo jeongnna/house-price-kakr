@@ -229,6 +229,57 @@ pp_conti_grid <- pp_grid(
   data = train_raw
 )
 
+pp_zipcode_switch <- pp_switch(
+  create_pp_zipcode(w = exp(-0.4), h = exp(-2.0)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-1.8)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-1.6)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-1.4)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-1.2)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-1.0)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-0.8)),
+  create_pp_zipcode(w = exp(-0.4), h = exp(-0.6)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-2.0)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-1.8)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-1.6)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-1.4)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-1.2)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-1.0)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-0.8)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-0.6)),
+  create_pp_zipcode(w = exp(0), h = exp(-2.0)),
+  create_pp_zipcode(w = exp(0), h = exp(-1.8)),
+  create_pp_zipcode(w = exp(0), h = exp(-1.6)),
+  create_pp_zipcode(w = exp(0), h = exp(-1.4)),
+  create_pp_zipcode(w = exp(0), h = exp(-1.2)),
+  create_pp_zipcode(w = exp(0), h = exp(-1.0)),
+  create_pp_zipcode(w = exp(0), h = exp(-0.8)),
+  create_pp_zipcode(w = exp(0), h = exp(-0.6)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-2.0)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-1.8)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-1.6)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-1.4)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-1.2)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-1.0)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-0.8)),
+  create_pp_zipcode(w = exp(0.2), h = exp(-0.6)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-2.0)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-1.8)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-1.6)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-1.4)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-1.2)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-1.0)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-0.8)),
+  create_pp_zipcode(w = exp(0.4), h = exp(-0.6)),
+  default = pp_sequential(
+    cat_to_factor,
+    remove_id,
+    remove_sqft_living,
+    trans_yr_renovated,
+    data = train_raw
+  ),
+  data = train_raw
+)
+
 
 # save pp modules ---------------------------------------------------------
 
@@ -238,3 +289,4 @@ save(pp_date_yr_grid, file = "models/pp_date_yr_grid.RData")
 save(pp_date_yr_switch, file = "models/pp_date_yr_switch.RData")
 save(pp_relevel_switch, file = "models/pp_relevel_switch.RData")
 save(pp_conti_grid, file = "models/pp_conti_grid.RData")
+save(pp_zipcode_switch, file = "models/pp_zipcode_switch.RData")
