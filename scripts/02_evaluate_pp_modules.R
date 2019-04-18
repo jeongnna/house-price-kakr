@@ -28,8 +28,8 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
   data <- predict(pp, data = data)
   cv_idx <- cv_idx_generate(nrow(data), n_folds)
   
-  tr_time <- 0
-  rf_pred <- rep(NA, nrow(data))
+  rf_time <- lasso_time <- 0
+  rf_pred <- lasso_pred <- rep(NA nrow(data))
   cat("Cross validation\n")
   for (k in seq_len(n_folds)) {
     cat("fold = ", k, "\n", sep = "")
@@ -40,20 +40,33 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
     x_train <- select(train, -price)
     y_train <- train$price
     x_val <- select(val, -price)
+    
+    # lasso
+    lasso_time_k <- system.time({
+      lasso_fitted <- cv_lasso(x_train, y_train, params = list())
+    })
+    lasso_time <- lasso_time + unname(lasso_time_k["elapsed"])
+    lasso_pred[cv_idx[[k]]] <- model_predict(lasso_fitted, x_val, lasso_params)
 
-    # model fitting & prediction
+    # random forest
     rf_params <- list(n_trees = floor(n_trees / n_cores))
-    tr_time_k <- system.time({
+    rf_time_k <- system.time({
       rf_fitted <- mclapply(1:n_cores, function(x) randomforest(x_train, y_train, rf_params), mc.cores = n_cores)
       rf_fitted <- reduce(rf_fitted, randomForest::combine)
     })
-    tr_time <- tr_time + tr_time_k["elapsed"]
+    rf_time <- rf_time + unname(rf_time_k["elapsed"])
     rf_pred[cv_idx[[k]]] <- model_predict(rf_fitted, x_val, rf_params)
   }
   
   list(
-    train_time = tr_time,
-    loss = rmse(rf_pred, data$price)
+    lasso = list(
+      time = lasso_time,
+      loss = rmse(lasso_pred, data$price
+    ),
+    rf = list(
+      time = rf_time,
+      loss = rmse(rf_pred, data$price)
+    )
   )
 }
 
@@ -75,10 +88,10 @@ oneclick_eval <- function(pp_file, multi_module) {
   pp_path <- str_c("models/", pp_file, ".RData")
   eval_log <- open_logfile()
   pp <- get(load(pp_path))
-  if (multi_module) {
-    res <- lapply(pp, function(p) eval_pp(p, data = train_raw))
+  if (is_pp(pp)) {
+    res <- list(eval_pp(pp, data = train_raw))
   } else {
-    res <- eval_pp(pp, data = train_raw)
+    res <- lapply(pp, function(p) eval_pp(p, data = train_raw))
   }
   eval_log[[pp_file]] <- res
   write_logfile(eval_log)
@@ -89,8 +102,8 @@ oneclick_eval <- function(pp_file, multi_module) {
 
 train_raw <- read_csv("data/train.csv")
 
-oneclick_eval("pp_baseline", multi_module = FALSE)
-oneclick_eval("pp_date_yr_grid", multi_module = TRUE)
-oneclick_eval("pp_date_yr_switch", multi_module = TRUE)
-oneclick_eval("pp_relevel_switch", multi_module = TRUE)
-oneclick_eval("pp_conti_grid", multi_module = TRUE)
+oneclick_eval("pp_baseline")
+oneclick_eval("pp_date_yr_grid")
+oneclick_eval("pp_date_yr_switch")
+oneclick_eval("pp_relevel_switch")
+oneclick_eval("pp_conti_grid")
