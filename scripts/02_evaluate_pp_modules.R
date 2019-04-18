@@ -42,8 +42,9 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
     x_val <- select(val, -price)
     
     # lasso
+    lasso_params <- list()
     lasso_time_k <- system.time({
-      lasso_fitted <- cv_lasso(x_train, y_train, params = list())
+      lasso_fitted <- cv_lasso(x_train, y_train, lasso_params)
     })
     lasso_time <- lasso_time + unname(lasso_time_k["elapsed"])
     lasso_pred[cv_idx[[k]]] <- model_predict(lasso_fitted, x_val, lasso_params)
