@@ -53,18 +53,7 @@ remove_sqft_living <- pp_remove(
   "sqft_living",
   desc = "remove sqft_living"
 )
-# trans_zipcode_baseline <- pp_instant(
-#   expr({
-#     repl <- object$sub_object$cluster
-#     names(repl) <- object$sub_object$zipcode
-#     data$zipcode <- plyr::revalue(factor(data$zipcode), repl)
-#   }),
-#   sub_object = zipcode_cluster(train_raw, w = 1),
-#   desc = "zipcode 53 clusters"
-# )
-
 trans_zipcode_baseline <- create_pp_zipcode(desc = "zipcode 53 clusters")
-
 trans_yr_renovated <- pp_instant(
   expr({
     no_rv <- data$yr_renovated == 0
@@ -154,17 +143,6 @@ remove_sqft_lot15 <- pp_remove(
 remove_sqft_lot <- pp_remove(
   "sqft_lot",
   desc = "remove sqft_lot"
-)
-
-
-# spatial
-trans_zipcode_w1_h.4 <- pp_instant(
-  expr({
-    repl <- object$sub_object$cluster
-    names(repl) <- object$sub_object$zipcode
-    data$zipcode <- plyr::revalue(factor(data$zipcode), repl)
-  }),
-  sub_object = zipcode_cluster(train_raw, w = 1, h = .4)
 )
 
 
