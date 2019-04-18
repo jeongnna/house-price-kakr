@@ -21,15 +21,12 @@ cv_idx_generate <- function(n, n_folds, seed = NULL) {
   cv_idx
 }
 
-eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42) {
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
+eval_pp <- function(pp, data, n_folds = 10, n_trees = 480, n_cores = 8, seed = 42) {
   data <- predict(pp, data = data)
-  cv_idx <- cv_idx_generate(nrow(data), n_folds)
+  cv_idx <- cv_idx_generate(nrow(data), n_folds, seed = seed)
   
-  rf_time <- lasso_time <- 0
-  rf_pred <- lasso_pred <- rep(NA, nrow(data))
+  rf_time <- 0
+  rf_pred <- rep(NA, nrow(data))
   cat("Cross validation\n")
   for (k in seq_len(n_folds)) {
     cat("fold = ", k, "\n", sep = "")
@@ -41,14 +38,6 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
     y_train <- train$price
     x_val <- select(val, -price)
     
-    # lasso
-    lasso_params <- list()
-    lasso_time_k <- system.time({
-      lasso_fitted <- cv_lasso(x_train, y_train, lasso_params)
-    })
-    lasso_time <- lasso_time + unname(lasso_time_k["elapsed"])
-    lasso_pred[cv_idx[[k]]] <- model_predict(lasso_fitted, x_val, lasso_params)
-
     # random forest
     rf_params <- list(n_trees = floor(n_trees / n_cores))
     rf_time_k <- system.time({
@@ -60,14 +49,8 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
   }
   
   list(
-    lasso = list(
-      time = lasso_time,
-      loss = rmse(lasso_pred, data$price)
-    ),
-    rf = list(
-      time = rf_time,
-      loss = rmse(rf_pred, data$price)
-    )
+    time = rf_time,
+    loss = rmse(rf_pred, data$price)
   )
 }
 
