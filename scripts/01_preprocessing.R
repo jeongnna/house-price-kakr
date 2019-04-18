@@ -280,6 +280,22 @@ pp_zipcode_switch <- pp_switch(
   data = train_raw
 )
 
+pp_compose_1 <- pp_sequential(
+  cat_to_factor,
+  remove_id,
+  remove_sqft_living,
+  trans_yr_renovated,
+  create_pp_zipcode(w = exp(0.2), h = exp(-1.6)),
+  new_renovated,
+  trans_yr_renovated2,
+  remove_date,
+  trans_grade,
+  new_no_basement,
+  trans_sqft_basement,
+  remove_sqft_lot15,
+  data = train_raw
+)
+
 
 # save pp modules ---------------------------------------------------------
 
@@ -290,3 +306,4 @@ save(pp_date_yr_switch, file = "models/pp_date_yr_switch.RData")
 save(pp_relevel_switch, file = "models/pp_relevel_switch.RData")
 save(pp_conti_grid, file = "models/pp_conti_grid.RData")
 save(pp_zipcode_switch, file = "models/pp_zipcode_switch.RData")
+save(pp_compose_1, file = "models/pp_compose_1.RData")
