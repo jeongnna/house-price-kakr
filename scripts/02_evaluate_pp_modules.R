@@ -29,7 +29,7 @@ eval_pp <- function(pp, data, n_folds = 5, n_trees = 240, n_cores = 8, seed = 42
   cv_idx <- cv_idx_generate(nrow(data), n_folds)
   
   rf_time <- lasso_time <- 0
-  rf_pred <- lasso_pred <- rep(NA nrow(data))
+  rf_pred <- lasso_pred <- rep(NA, nrow(data))
   cat("Cross validation\n")
   for (k in seq_len(n_folds)) {
     cat("fold = ", k, "\n", sep = "")
