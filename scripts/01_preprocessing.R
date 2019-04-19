@@ -146,6 +146,17 @@ remove_sqft_lot <- pp_remove(
 )
 
 
+# spatial
+remove_latlong <- pp_remove(
+  c("lat", "long"),
+  desc = "remove lat, long"
+)
+remove_zipcode <- pp_remove(
+  "zipcode",
+  desc = "remove zipcode"
+)
+
+
 # pp sequential modules ---------------------------------------------------
 
 pp_baseline <- pp_sequential(
@@ -264,13 +275,19 @@ pp_compose_1 <- pp_sequential(
   remove_sqft_living,
   trans_yr_renovated,
   create_pp_zipcode(w = exp(0.2), h = exp(-1.6)),
-  new_renovated,
-  trans_yr_renovated2,
   remove_date,
+  remove_yr,
   trans_grade,
-  new_no_basement,
+  trans_bathrooms,
   trans_sqft_basement,
   remove_sqft_lot15,
+  data = train_raw
+)
+
+pp_spatial_grid <- pp_grid(
+  remove_latlong,
+  remove_zipcode,
+  default = pp_compose_1,
   data = train_raw
 )
 
@@ -285,3 +302,4 @@ save(pp_relevel_switch, file = "models/pp_relevel_switch.RData")
 save(pp_conti_grid, file = "models/pp_conti_grid.RData")
 save(pp_zipcode_switch, file = "models/pp_zipcode_switch.RData")
 save(pp_compose_1, file = "models/pp_compose_1.RData")
+save(pp_spatial_grid, file = "models/pp_spatial_grid.RData")

@@ -21,7 +21,7 @@ cv_idx_generate <- function(n, n_folds, seed = NULL) {
   cv_idx
 }
 
-eval_pp <- function(pp, data, n_folds = 10, n_trees = 480, n_cores = 8, seed = 42) {
+eval_pp <- function(pp, data, n_folds = 10, n_iters = 480, n_cores = 8, seed = 42) {
   data <- predict(pp, data = data)
   cv_idx <- cv_idx_generate(nrow(data), n_folds, seed = seed)
   
@@ -39,7 +39,7 @@ eval_pp <- function(pp, data, n_folds = 10, n_trees = 480, n_cores = 8, seed = 4
     x_val <- select(val, -price)
     
     # random forest
-    rf_params <- list(n_trees = floor(n_trees / n_cores))
+    rf_params <- list(n_iters = floor(n_iters / n_cores))
     rf_time_k <- system.time({
       rf_fitted <- mclapply(1:n_cores, function(x) randomforest(x_train, y_train, rf_params), mc.cores = n_cores)
       rf_fitted <- reduce(rf_fitted, randomForest::combine)
@@ -93,3 +93,4 @@ oneclick_eval("pp_relevel_switch")
 oneclick_eval("pp_conti_grid")
 oneclick_eval("pp_zipcode_switch")
 oneclick_eval("pp_compose_1")
+oneclick_eval("pp_spatial_grid")
