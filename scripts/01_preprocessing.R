@@ -17,7 +17,7 @@ zipcode_cluster <- function(data, w = 1, k = NULL, h = NULL) {
   zipcode_summ$log_price <- scale(zipcode_summ$log_price) * s * w
   hc <- hclust(dist(zipcode_summ[2:4]))
   zipcode_summ$cluster <- factor(cutree(hc, k, h))
-  zipcode_summ %>% select(zipcode, cluster)
+  select(zipcode_summ, zipcode, cluster)
 }
 
 create_pp_zipcode <- function(w = 1, k = NULL, h = NULL, desc = NULL) {
@@ -274,7 +274,7 @@ pp_compose_1 <- pp_sequential(
   remove_id,
   remove_sqft_living,
   trans_yr_renovated,
-  create_pp_zipcode(w = exp(0.2), h = exp(-1.6)),
+  create_pp_zipcode(w = exp(-0.2), h = exp(-1.6)),
   remove_date,
   remove_yr,
   trans_grade,

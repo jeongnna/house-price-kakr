@@ -4,7 +4,7 @@ library(rjson)
 
 eval_log <- fromJSON(file = "outputs/eval_pp.json")
 
-i <- 2
+i <- 6
 names(eval_log)[i]
 df <- reduce(eval_log[c(1, i)], bind_rows)
 df %>% 
