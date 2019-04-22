@@ -56,11 +56,11 @@ for (depth in 3:6) {
         range = c(-0.2, 0)
       ),
       list(
-        name = "col_fraction",
+        name = "row_fraction",
         range = c(-0.2, 0)
       )
     ),
-    n_search = 50,
+    n_search = 32,
     data_list = data_list,
     model = jnds::xgboost,
     loss_fn = rmse,
