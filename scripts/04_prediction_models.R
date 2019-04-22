@@ -43,68 +43,38 @@ for (k in seq_len(n_folds)) {
 }
 
 
-hptune <- model_tune(
-  params = list(
-    list(
-      name = "learning_rate",
-      range = c(-1, 0)
-    )
-  ),
-  n_search = 20,
-  data_list = data_list,
-  model = jnds::xgboost,
-  loss_fn = rmse,
-  more_params = list(
-    objective = "reg:linear",
-    depth = 3,
-    min_child = 1,
-    n_iters = 1000,
-    early_stopping_iters = 50
-  ),
-  max_iters = 3,
-  n_cores = 8,
-  seed = 42
-)
-save(hptune, "models/hptune.RData")
-
-# 
-# ###
-# xgb_params = list(
-#   objective = "reg:linear",
-#   depth = 3,
-#   min_child = 1,
-#   learning_rate = 0.3,
-#   n_iters = 500,
-#   early_stopping_iters = 50
-# )
-# 
-# models <- list()
-# for (k in 1:n_folds) {
-#   data <- data_list[[k]]
-#   x_train <- data$x_train
-#   y_train <- data$y_train
-#   x_val <- data$x_val
-#   y_val <- data$y_val
-#   
-#   models[[k]] <- xgboost(x_train, y_train, more_params, x_val, y_val)
-# }
-# 
-# pred <- NULL
-# for (k in 1:n_folds) {
-#   data <- data_list[[k]]
-#   x_val <- data$x_val
-#   preds <- lapply(models, function(mod) model_predict(mod, x_val))
-#   pred <- c(pred, unlist(map(transpose(preds), function(x) reduce(x, sum))) / n_folds)
-# }
-# y_val_full <- unlist(map(data_list, "y_val"))
-# rmse(pred, y_val_full)
-# 
-# ###
-# pred <- NULL
-# for (k in 1:n_folds) {
-#   data <- data_list[[k]]
-#   x_val <- data$x_val
-#   pred <- c(pred, model_predict(models[[k]], x_val))
-# }
-# y_val_full <- unlist(map(data_list, "y_val"))
-# rmse(pred, y_val_full)
+for (depth in 3:6) {
+  cat("depth:", depth, "\n")
+  hptune <- model_tune(
+    params = list(
+      list(
+        name = "learning_rate",
+        range = c(-2, 0)
+      ),
+      list(
+        name = "col_fraction",
+        range = c(-0.2, 0)
+      ),
+      list(
+        name = "col_fraction",
+        range = c(-0.2, 0)
+      )
+    ),
+    n_search = 50,
+    data_list = data_list,
+    model = jnds::xgboost,
+    loss_fn = rmse,
+    more_params = list(
+      objective = "reg:linear",
+      depth = depth,
+      min_child = 1,
+      n_iters = 5000,
+      early_stopping_iters = 100
+    ),
+    max_iters = 2,
+    n_cores = 8,
+    seed = 42
+  )
+  outfile <- str_c("models/hptune_depth_", depth, ".RData")
+  save(hptune, outfile)
+}
