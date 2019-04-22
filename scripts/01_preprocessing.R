@@ -115,7 +115,7 @@ trans_floors <- pp_instant(
   }),
   desc = "relevel floors"
 )
-as_factor_floors <- pp_factor(cols = "floors", desc = "floors to factor")
+floors_to_factor <- pp_factor(cols = "floors", desc = "floors to factor")
 
 
 # continuous variables
@@ -279,7 +279,7 @@ pp_compose_1 <- pp_sequential(
   remove_yr,
   trans_grade,
   trans_bathrooms,
-  trans_sqft_basement,
+  # trans_sqft_basement,
   remove_sqft_lot15,
   data = train_raw
 )
